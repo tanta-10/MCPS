@@ -146,8 +146,7 @@ public:
             generation_count++;
         }
         
-        // Render loop
-        #pragma omp parallel for if(width * height > 1000)
+        // Render loop (serial for now - OpenMP has threading issues with samplers)
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 int pixel_idx = y * width + x;

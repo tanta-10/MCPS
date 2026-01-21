@@ -188,12 +188,9 @@ int main(int argc, char** argv) {
     std::cout << "Resolution: " << width << "x" << height << std::endl;
     std::cout << "Samples per pixel: " << spp << std::endl << std::endl;
     
-    std::cout << "About to create scene...\n" << std::flush;
-    
     // Create scene
-    std::cout << "Creating scene...\n" << std::flush;
+    std::cout << "Creating scene...\n";
     Scene<Float>* scene = create_cornell_box();
-    std::cout << "Scene created successfully\n" << std::flush;
     
     // Create camera
     std::cout << "Setting up camera...\n";
@@ -214,18 +211,15 @@ int main(int argc, char** argv) {
     };
     
     for (const auto& [name, mode] : modes) {
-        std::cout << "\n========================================\n" << std::flush;
-        std::cout << "Rendering with " << name << " sampling...\n" << std::flush;
-        std::cout << "========================================\n" << std::flush;
+        std::cout << "\n========================================\n";
+        std::cout << "Rendering with " << name << " sampling...\n";
+        std::cout << "========================================\n";
         
         auto start = std::chrono::high_resolution_clock::now();
         
-        std::cout << "Creating integrator...\n" << std::flush;
         // Create integrator
         MCPSIntegrator<Float> integrator(mode, true, false);
-        std::cout << "Integrator created\n" << std::flush;
         
-        std::cout << "Starting render...\n" << std::flush;
         // Render
         auto image = integrator.render_novel(*scene, camera, width, height, spp);
         

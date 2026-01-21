@@ -85,11 +85,12 @@ template<typename T>
 class ChaoticSampler : public Sampler<T> {
 public:
     ChaoticSampler(uint64_t seed = 0)
-        : base_sampler(seed), x(0.1), y(0), z(0),
-          sigma(10), rho(28), beta(T(8.0/3.0)), dt(T(0.01)) {
+        : x(0.1), y(0), z(0),
+          sigma(10), rho(28), beta(T(8.0/3.0)), dt(T(0.01)),
+          rng(seed), dist(0.0, 1.0) {
         // Initialize with random perturbation
-        T r1 = base_sampler.next_1d();
-        T r2 = base_sampler.next_1d();
+        T r1 = T(dist(rng));
+        T r2 = T(dist(rng));
         x += r1 * T(0.1);
         y += r2 * T(0.1);
     }
@@ -116,10 +117,11 @@ public:
     }
     
 private:
-    IndependentSampler<T> base_sampler;
     T x, y, z;          // Lorenz attractor state
     T sigma, rho, beta; // Lorenz parameters
     T dt;               // Time step
+    std::mt19937_64 rng;
+    std::uniform_real_distribution<double> dist;
 };
 
 /// @brief Fractal importance sampler using Mandelbrot set structure
@@ -129,11 +131,12 @@ template<typename T>
 class FractalSampler : public Sampler<T> {
 public:
     FractalSampler(uint64_t seed = 0, int max_iter = 100)
-        : base_sampler(seed), max_iterations(max_iter), iteration(0) {}
+        : max_iterations(max_iter), iteration(0),
+          rng(seed), dist(0.0, 1.0) {}
     
     T next_1d() override {
-        T u = base_sampler.next_1d();
-        T v = base_sampler.next_1d();
+        T u = T(dist(rng));
+        T v = T(dist(rng));
         
         // Map to complex plane
         T cx = (u - T(0.5)) * T(3.5);
@@ -162,9 +165,10 @@ public:
     }
     
 private:
-    IndependentSampler<T> base_sampler;
     int max_iterations;
     int iteration;
+    std::mt19937_64 rng;
+    std::uniform_real_distribution<double> dist;
 };
 
 /// @brief Entropy-driven adaptive sampler
@@ -184,7 +188,7 @@ public:
     };
     
     EntropyDrivenSampler(uint64_t seed = 0, int grid_size = 16)
-        : base_sampler(seed) {
+        : rng(seed), dist(0.0, 1.0) {
         // Initialize spatial grid
         int n = grid_size;
         for (int i = 0; i < n; ++i) {
@@ -198,7 +202,7 @@ public:
     }
     
     T next_1d() override {
-        return base_sampler.next_1d();
+        return T(dist(rng));
     }
     
     void next_2d(T& u, T& v) override {
@@ -209,15 +213,16 @@ public:
             Region& r = regions[region_idx];
             
             // Sample within selected region
-            T ru = base_sampler.next_1d();
-            T rv = base_sampler.next_1d();
+            T ru = T(dist(rng));
+            T rv = T(dist(rng));
             
             u = r.min_u + ru * (r.max_u - r.min_u);
             v = r.min_v + rv * (r.max_v - r.min_v);
             
             r.sample_count++;
         } else {
-            base_sampler.next_2d(u, v);
+            u = T(dist(rng));
+            v = T(dist(rng));
         }
     }
     
@@ -238,8 +243,9 @@ public:
     }
     
 private:
-    IndependentSampler<T> base_sampler;
     std::vector<Region> regions;
+    std::mt19937_64 rng;
+    std::uniform_real_distribution<double> dist;
     
     int select_region_by_entropy() {
         if (regions.empty()) return -1;
@@ -250,7 +256,7 @@ private:
             total_entropy += r.entropy;
         }
         
-        T r = base_sampler.next_1d() * total_entropy;
+        T r = T(dist(rng)) * total_entropy;
         T cumulative = T(0);
         
         for (size_t i = 0; i < regions.size(); ++i) {
